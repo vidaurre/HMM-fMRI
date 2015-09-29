@@ -1,0 +1,3 @@
+/usr/local/fsl/bin/halfcosbasis --hf=/tmp/flobs_6nmPtM.txt --nbfs=4 --ns=28 --logdir=/tmp/flobs_6nmPtM.flobs --nhs=1000 --res=0.05 
+---------------------------------------------
+
