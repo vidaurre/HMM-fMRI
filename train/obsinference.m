@@ -62,12 +62,22 @@ for tr=1:length(T)
         end
         
         % Design matrix
-        A = zeros(data.T(tr)*ndim,Ttr*ndim); %,T(tr)*ndim) ?    
+        A = zeros(data.T(tr)*ndim,Ttr*ndim);
         for t=1:data.T(tr)
+            if t<=cutoff(1) % how many x_t to leave out
+                J0 = cutoff(1)-t+1; J1 = 0;
+                tt1 = 1; tt2 = L-J0;
+            elseif t>(data.T(tr)+cutoff(2))
+                J0 = 0; J1 = t - (data.T(tr)+cutoff(2));
+                tt1 =  t - cutoff(1); tt2 = Ttr;
+            else
+                J0 = 0; J1 = 0;
+                tt1 = t - cutoff(1); tt2 = tt1 + L - 1;
+            end
             for n=1:ndim
                 ind1 = n+ndim*(t-1);
-                ind2 = ( (t-1)*ndim+n ) : ndim : ( (t-2+L)*ndim+n );
-                A(ind1,ind2) = R;
+                ind2 = ( (tt1-1)*ndim+n ) : ndim : ( (tt2-1)*ndim+n );
+                A(ind1,ind2) = R(n,1+J0:end-J1);
             end
         end
         
@@ -76,13 +86,13 @@ for tr=1:length(T)
         for j1 = 1:Ttr
             l1 = max(1,j1-Ttr+L) : min(L,j1);
             for d = 0:L-1
-                j2 = j1+d;
+                j2 = j1 + d;
                 if j2>Ttr, break; end
                 l2 = l1 + d; valid = (l2<=L);
                 for n=1:ndim
                     ind1 = ndim*(j1-1) + n;
                     ind2 = ndim*(j2-1) + n;
-                    M2(ind1,ind2) = sum(diag(Q(n,l1(valid),l2(valid))));
+                    M2(ind1,ind2) = sum(diag(Q(l1(valid),l2(valid),n)));
                     M2(ind2,ind1) = M(ind1,ind2);
                 end
             end

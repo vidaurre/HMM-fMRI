@@ -1,5 +1,5 @@
 function [I1,I2,T] = initindexes(TfMRI,L,HzfMRI,HzSignal)
-% I1 (TsignalxL) says with y_t is predicted by each x_t1 for this lag (0 means none)
+% I1 (TsignalxL) says with y_t are predicted by each x_t1 for this lag (0 means none)
 % I2 (TfMRIxL) says which x_t1 are predicting each y_t2
 T = round((TfMRI-1) * (HzSignal/HzfMRI)) + L;
 
