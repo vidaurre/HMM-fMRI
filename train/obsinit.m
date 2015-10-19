@@ -20,7 +20,7 @@ for tr=1:length(data.T)
     t0 = sum(T(1:tr-1)); t1 = sum(T(1:tr));
     updateXindexes = [updateXindexes (t0+cutoff(1)+1):(t1+cutoff(2))];
     if tr==1 || data.T(tr)~=data.T(tr-1)
-        A = zeros(data.T(tr),data.T(tr)+L-1);
+        A = zeros(data.T(tr),T(tr));
         for t=1:data.T(tr)
             ind = (1:L) + (t-1);
             A(t,ind) = rmeanH;

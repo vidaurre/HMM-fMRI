@@ -6,6 +6,7 @@ if ~isfield(options,'Hz'), options.Hz = data.Hz; end
 if ~isfield(options,'p'), options.p = 3; end % number of basis functions
 if ~isfield(options,'covtype'), options.covtype = 'full'; end
 if ~isfield(options,'zeroBmean'), options.zeroBmean = 0; end % prior mean of B
+if ~isfield(options,'factorX'), options.factorX = 0; end % should we factorize the optimization of X over t
 if ~isfield(options,'cyc'), options.cyc = 1000; end
 if ~isfield(options,'tol'), options.tol = 1e-5; end
 if ~isfield(options,'meancycstop'), options.meancycstop = 1; end
@@ -21,7 +22,7 @@ if ~isfield(options,'DirichletDiag'), options.DirichletDiag = 2; end
 if ~isfield(options,'cutoffThres'), options.cutoffThres = 0.95; end % Initial and final part of each trial of 
 if ~isfield(options,'beta'), options.beta = 1e-2; end % scaling factor on the prior covariance for the HRF parameters
 % X will not be considered to compute the states parameters and will not be
-% updated either - this is used to define this
+% updated either - this is used to define this. 
 if ~isfield(options,'lambda'), options.lambda = 0; end % regularisation parameter in the obs init
 if ~isfield(options,'Gamma'), options.Gamma = []; end
 if ~isfield(options,'hmm'), options.hmm = []; end
