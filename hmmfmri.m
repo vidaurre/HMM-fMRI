@@ -21,7 +21,7 @@ function [hmm, Gamma, Xi, vpath, X, fehist] = hmmfmri (data,options)
 
 options = checkoptions(options,data,0);
 [options.H,options.meanH,options.meanB,options.covB,~,options.cutoff] = ...
-    HRFbasis(options.p,options.Hz,options.zeroBmean);
+    HRFbasis(options.p,options.Hz,options.cutoffThres);
 [options.I1,options.I2,T] = initindexes(data.T,size(options.H,2),data.Hz,options.Hz);
 
 if ~isfield(data,'C'), 

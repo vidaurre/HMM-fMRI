@@ -18,43 +18,54 @@ function [Gamma,Gammasum,Xi,LL]=hsinference(data,T,hmm,X)
 
 
 N = length(T);
-K=hmm.K;
+K = hmm.K; ndim = size(X.mu,2);
 cutoff = hmm.train.cutoff; scutoff = sum(abs(cutoff));
 
-Gamma=[]; LL = [];
-Gammasum=zeros(N,K);
+Gamma = []; LL = [];
+Gammasum = zeros(N,K);
 Xi=[];
 
-for in=1:N
-    t0 = sum(T(1:in-1));  
-    Xin.mu = X.mu(t0+1+cutoff(1):t0+T(in)+cutoff(2),:);
-    if strcmp(hmm.train.covtype,'diag')
-        Xin.S = X.S(t0+1+cutoff(1):t0+T(in)+cutoff(2),:);
+for tr=1:N
+    t0 = sum(T(1:tr-1));  
+    Xin.mu = X.mu(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:);
+    if hmm.train.factorX
+        if strcmp(hmm.train.covtype,'diag')
+            Xin.S = X.S(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:);
+        else
+            Xin.S = X.S(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:,:);
+        end
     else
-        Xin.S = X.S(t0+1+cutoff(1):t0+T(in)+cutoff(2),:,:);
+        Xin.S = cell(1);
+        Xin.S{1} = X.S{tr};
     end
-    C = data.C(t0+1+cutoff(1):t0+T(in)+cutoff(2),:);
+    C = data.C(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:);
     % we jump over the fixed parts of the chain
-    t = 1; Tin = T(in)-scutoff;
+    t = 1; Ttr = T(tr)-scutoff;
     xi = []; gamma = []; gammasum = zeros(1,K); ll = [];
     
-    while t<=Tin
+    while t<=Ttr
         if isnan(C(t,1)), no_c = find(~isnan(C(t:end,1)));
         else no_c = find(isnan(C(t:end,1)));
         end
         if t>1
-            if isempty(no_c), slice = (t-1):Tin;  
+            if isempty(no_c), slice = (t-1):Ttr;  
             else slice = (t-1):(no_c(1)+t-2);  
             end;
         else
-            if isempty(no_c), slice = t:Tin;  
+            if isempty(no_c), slice = t:Ttr;  
             else slice = (t):(no_c(1)+t-2);  
             end;
         end
         if isnan(C(t,1))
             x.mu = Xin.mu(slice,:); 
-            if strcmp(hmm.train.covtype,'diag'), x.S = Xin.S(slice,:);
-            else x.S = Xin.S(slice,:,:); 
+            if hmm.train.factorX
+                if strcmp(hmm.train.covtype,'diag'), x.S = Xin.S(slice,:);
+                else x.S = Xin.S(slice,:,:);
+                end
+            else
+                x.S = cell{1};
+                ind = ((slice(1)-1)*ndim + 1) : (slice(end)*ndim) ;
+                x.S{1} = Xin.S{1}(ind,ind);
             end
             [gammat,xit,Bt]=nodecluster(x,hmm); 
         else
@@ -79,9 +90,9 @@ for in=1:N
         end;
     end
     Gamma = [Gamma; gamma];
-    Gammasum(in,:) = gammasum;
+    Gammasum(tr,:) = gammasum;
     if nargout==4, LL = [LL;ll]; end
-    Xi = cat(1,Xi,reshape(xi,T(in)-1-scutoff,K,K));
+    Xi = cat(1,Xi,reshape(xi,T(tr)-1-scutoff,K,K));
 end;
 
 

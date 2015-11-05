@@ -1,4 +1,4 @@
-function hmm=simmodel(TfMRI,Tsignal,p,ndim,K,Hz,covtype,zeroBmean,HRFconstant,StatePermanency,noiseFactor,train)
+function hmm=simmodel(TfMRI,Tsignal,p,ndim,K,Hz,covtype,HRFconstant,StatePermanency,noiseFactor,train)
 % Hz is frequency of the latent signal;
 % train, if provided, must contain H, meanB and covB
 
@@ -6,7 +6,7 @@ N = length(TfMRI);
 
 % Basis functions
 if nargin<12
-    [train.H,~,train.meanB,train.covB] = HRFbasis(p,Hz,zeroBmean);
+    [train.H,~,train.meanB,train.covB] = HRFbasis(p,Hz);
 end
 hmm.train.H = train.H;
 hmm.train.covtype = covtype;
@@ -21,8 +21,8 @@ hmm.Pi=hmm.Pi./sum(hmm.Pi);
 
 % HRFs
 for tr=1:N
-    hmm.HRF(tr).B.mu = zeros(p,ndim);
-    hmm.HRF(tr).B.S = zeros(p,p,ndim);
+    hmm.HRF(tr).B.mu = zeros(p+1,ndim);
+    hmm.HRF(tr).B.S = zeros(p+1,p+1,ndim);
     hmm.HRF(tr).alpha.shape = zeros(1,ndim);
     hmm.HRF(tr).alpha.rate = zeros(1,ndim);
     hmm.HRF(tr).sigma.shape = zeros(1,ndim);
@@ -37,7 +37,7 @@ for tr=1:N
             hmm.HRF(tr).B.S(:,:,n) = hmm.HRF(1).B.S(:,:,n);
         else
             hmm.HRF(tr).alpha.shape(n) = 0.5 * p;
-            hmm.HRF(tr).alpha.rate(n) = hmm.HRF(tr).alpha.shape(n) * 0.25 * rand;
+            hmm.HRF(tr).alpha.rate(n) = hmm.HRF(tr).alpha.shape(n); %hmm.HRF(tr).alpha.shape(n) * 0.25 * rand;
             hmm.HRF(tr).sigma.shape(n) = 0.5 * Tsignal(tr);
             hmm.HRF(tr).sigma.rate(n) = hmm.HRF(tr).sigma.shape(n) * noiseFactor(1) * rand;   
             hmm.HRF(tr).B.mu(:,n) =  ...

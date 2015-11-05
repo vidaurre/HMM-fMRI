@@ -46,6 +46,10 @@ for cycle=1:hmm.train.cyc
         % HRF model
         if cycle<=hmm.train.subcycHRF(1) || mod(cycle,hmm.train.subcycHRF(2))==0
             hmm = HRFupdate(data,T,hmm,X);
+            load /tmp/hmmtrue.mat
+            %HRF = reconstructHRF(hmm);
+            %HRFtrue = reconstructHRF(hmmtrue);
+            %clf;plot(HRF');hold on; plot(HRFtrue',':'); hold off
         end
         
     end
@@ -73,7 +77,8 @@ for cycle=1:hmm.train.cyc
         [as,hmm,Gamma,Xi] = getactivestates(hmm,Gamma,Xi);
         if any(as==0), 
             warning('I am dropping a state')
-            cyc_to_go = hmm.train.cycstogoafterevent; end
+            cyc_to_go = hmm.train.cycstogoafterevent; 
+        end
         actstates(as1(as==0)) = 0;
         
         % transition matrices and initial state
