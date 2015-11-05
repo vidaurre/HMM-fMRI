@@ -19,9 +19,10 @@ hmm = initpriors(data,hmm); % priors
 hmm = initpost(data.T,hmm,ndim); % posteriori
 [X,updateXindexes] = obsinit(data,hmm); % init latent signal
 hmm.train.updateXindexes = updateXindexes;
+%hmm.train.Yboundary = Yboundary(data,hmm,X); % because the start and end of X is not updated, Y needs to be adjusted (pending)
 scutoff = sum(abs(hmm.train.cutoff));
 hmm = HRFupdate(data,T,hmm,X); % HRF model
-X = obsinference(data,T,hmm,zeros(sum(T)-length(T)*scutoff,K),X); % infer the latent signal only based on Y
+X = obsinference(data,T,hmm,(1/K) * ones(sum(T)-length(T)*scutoff,K),X); % infer the latent signal only based on Y
 if isempty(hmm.train.Gamma) % states
     if strcmp(hmm.train.inittype,'GMM'), 
         Gamma = gmm_init(X.mu(updateXindexes,:),T-scutoff,hmm.train); 

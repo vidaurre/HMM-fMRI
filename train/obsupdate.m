@@ -1,4 +1,4 @@
-function hmm = obsupdate (hmm,Gamma,X)
+function hmm = obsupdate (hmm,Gamma,X,T)
 %
 % Update observation model
 %
@@ -6,6 +6,7 @@ function hmm = obsupdate (hmm,Gamma,X)
 % hmm           hmm data structure
 % Gamma         p(state given X,Y)
 % X             latent signal
+% T             number of time points for each latent time series
 %
 % OUTPUT
 % hmm           estimated HMMMAR model
@@ -15,6 +16,7 @@ function hmm = obsupdate (hmm,Gamma,X)
 ndim = size(X.mu,2); K=length(hmm.state);
 updateXindexes = hmm.train.updateXindexes;
 Gammasum = sum(Gamma);
+T = T - sum(abs(cutoff));
 
 % Mean
 for k=1:K,
@@ -34,17 +36,42 @@ for k=1:K,
 end
 
 % Covariance
+if ~hmm.train.factorX
+    if strcmp(hmm.train.covtype,'diag')
+        S = zeros(length(updateXindexes),ndim);
+    else
+        S = zeros(length(updateXindexes),ndim,ndim);
+    end
+    pos = 1;
+    for tr=1:length(T)
+        for t=1:T(tr)
+            ind = (1:ndim) + ndim*(t-1);
+            if strcmp(hmm.train.covtype,'diag')
+                S(pos,:) = diag(X.S{tr}(ind,ind))';
+            else
+                S(pos,:,:) = X.S{tr}(ind,ind);
+            end
+            pos = pos + 1;
+        end
+    end
+end
 for k=1:K
     dist = X.mu(updateXindexes,:) - repmat(hmm.state(k).Mean.mu,length(updateXindexes),1);
     if strcmp(hmm.train.covtype,'diag')
-        hmm.state(k).Omega.rate = hmm.state(k).prior.Omega.rate + ...    
-            0.5 * sum( repmat(Gamma(:,k),1,ndim) .* ( dist.^2 + X.S(updateXindexes,:)) ) + ...
-            0.5 * Gammasum(k) * hmm.state(k).Mean.S ;
+        if hmm.train.factorX
+            S1 = X.S(updateXindexes,:);       
+        end
+        S2 = Gammasum(k) * hmm.state(k).Mean.S;
+        hmm.state(k).Omega.rate = hmm.state(k).prior.Omega.rate + ...
+                0.5 * sum( repmat(Gamma(:,k),1,ndim) .* ( dist.^2 + S1) ) + 0.5 * S2;
         hmm.state(k).Omega.irate = 1 ./ hmm.state(k).Omega.rate;
         hmm.state(k).Omega.shape = hmm.state(k).prior.Omega.shape + 0.5 * Gammasum(k);
     else % full
         M = (dist .* repmat(Gamma(:,k),1,ndim))' * dist;
-        S1 = permute(sum(repmat(Gamma(:,k),[1,ndim,ndim]) .* X.S(updateXindexes,:,:),1),[2 3 1]);
+        if hmm.train.factorX
+            S = X.S(updateXindexes,:,:);       
+        end
+        S1 = permute(sum(repmat(Gamma(:,k),[1,ndim,ndim]) .* S,1),[2 3 1]);
         S2 = Gammasum(k) * hmm.state(k).Mean.S;
         hmm.state(k).Omega.rate = hmm.state(k).prior.Omega.rate + (M + S1 + S2);
         hmm.state(k).Omega.irate = inv(hmm.state(k).Omega.rate);

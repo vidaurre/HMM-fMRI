@@ -11,8 +11,8 @@ function LL = obslike (hmm,X)
 %
 % Author: Diego Vidaurre, OHBA, University of Oxford
  
-[T,ndim]=size(X.mu);
-K=hmm.K;
+[T,ndim] = size(X.mu);
+K = hmm.K;
  
 LL=zeros(T,K);  
 ltpi= ndim/2 * log(2*pi);
@@ -23,7 +23,7 @@ for k=1:K
     switch hmm.train.covtype,
         case 'diag'
             ldetWishB=0.5*sum(log(hs.Omega.rate));
-            PsiWish_alphasum=0.5*ndim*psi(hs.Omega.shape/2);
+            PsiWish_alphasum=0.5*ndim*psi(hs.Omega.shape); %/2);  % why /2 ?? if not, HMM-MAR is wrong
             C = hs.Omega.shape ./ hs.Omega.rate;
         case 'full'
             ldetWishB=0.5*logdet(hs.Omega.rate);
@@ -46,18 +46,38 @@ for k=1:K
         dist=dist-0.5*d(:,n).*Cd(n,:)';
     end
         
-    if strcmp(hmm.train.covtype,'diag')
-        NormWishtrace = 0.5 * sum(repmat(C,T,1) .* (repmat(hs.Mean.S,T,1) + X.S) , 2);
+    if hmm.train.factorX
+        if strcmp(hmm.train.covtype,'diag')
+            NormWishtrace = 0.5 * sum(repmat(C,T,1) .* (repmat(hs.Mean.S,T,1) + X.S) , 2);
+        else
+            NormWishtrace = zeros(T,1);
+            for n1=1:ndim
+                for n2=1:ndim % do this more efficient...
+                    NormWishtrace = NormWishtrace + 0.5 * C(n1,n2) * ( hs.Mean.S(n1,n2) + X.S(:,n1,n2));
+                end
+            end
+        end
     else
-        NormWishtrace = zeros(T,1);
-        for n1=1:ndim
-            for n2=1:ndim
-                NormWishtrace = NormWishtrace + 0.5 * C(n1,n2) * ( hs.Mean.S(n1,n2) + X.S(:,n1,n2));
+        if strcmp(hmm.train.covtype,'diag')
+            NormWishtrace = 0.5 * sum(repmat(C,T,1) .* (repmat(hs.Mean.S,T,1) ) , 2);
+        else
+            NormWishtrace = zeros(T,1);
+            for n1=1:ndim
+                for n2=1:ndim
+                    NormWishtrace = NormWishtrace + 0.5 * C(n1,n2) * hs.Mean.S(n1,n2) ;
+                end
+            end
+        end
+        for t=1:T
+            ind = (1:ndim) + ndim*(t-1);
+            if strcmp(hmm.train.covtype,'diag')
+                NormWishtrace(t) = NormWishtrace(t) + 0.5 * sum( C' .*  diag(X.S{1}(ind,ind)) );
+            else
+                NormWishtrace(t) = NormWishtrace(t) + 0.5 * sum(sum( C' .* X.S{1}(ind,ind) ));
             end
         end
     end
-    
-    
+          
     LL(:,k)= -ltpi - ldetWishB + PsiWish_alphasum + dist - NormWishtrace; 
 end;
 LL=exp(LL);

@@ -62,8 +62,10 @@ for tr=1:N
         hmm.HRF(tr).sigma.rate ./ hmm.HRF(tr).sigma.shape);
     for n=1:ndim
         G = zeros(TfMRI(tr),p);
+        %G0 = zeros(TfMRI(tr),1);
         for t=t0:t1
             G(t-t0+1,:) = sum(repmat(X(I2(t,:),n)',p,1) .* hmm.train.H,2)';
+            %G0(t-t0+1) = sum(X(I2(t,:),n)) * hmm.train.H0;
         end
         Y(t0:t1,n) =  Y(t0:t1,n) + G * hmm.HRF(tr).B.mu(:,n);
     end

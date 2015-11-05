@@ -5,9 +5,9 @@ function [vpath]=hmmdecode(T,hmm,X)
 % was fixed. This means that the assignment for those can be different.
 %
 % INPUT
-% T             length of series
+% T         length of latent series
 % hmm       hmm data structure
-% X      latent series
+% X         latent series
 %
 % OUTPUT
 % vpath(i).q_star    maximum likelihood state sequence
@@ -19,28 +19,39 @@ N = length(T);
 K=hmm.K;
 P=hmm.P;
 Pi=hmm.Pi;
+cutoff = hmm.train.cutoff; scutoff = sum(abs(cutoff));
 
-for in=1:N
+for tr=1:N
     
-    q_star = ones(T(in),1);
+    Ttr = T(tr)-scutoff;
+    q_star = ones(Ttr,1);
     
-    alpha=zeros(T(in),K);
-    beta=zeros(T(in),K);
+    alpha=zeros(Ttr,K);
+    beta=zeros(Ttr,K);
     
     % Initialise Viterbi bits
-    delta=zeros(T(in),K);
-    psi=zeros(T(in),K);
-    
-    if in==1, t0 = 0;  
-    else t0 = sum(T(1:in-1));  
+    delta=zeros(Ttr,K);
+    psi=zeros(Ttr,K);
+
+    t0 = sum(T(1:tr-1));  
+    Xin.mu = X.mu(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:);
+    if hmm.train.factorX
+        if strcmp(hmm.train.covtype,'diag')
+            Xin.S = X.S(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:);
+        else
+            Xin.S = X.S(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:,:);
+        end
+    else
+        Xin.S = cell(1);
+        Xin.S{1} = X.S{tr};
     end
-    
-    B = obslike(hmm,X);
+
+    B = obslike(hmm,Xin);
     B(B<realmin) = realmin;
     
-    scale=zeros(T(in),1);
+    scale=zeros(Ttr,1);
     % Scaling for delta
-    dscale=zeros(T(in),1);
+    dscale=zeros(Ttr,1);
     
     alpha(1,:)=Pi(:)'.*B(1,:);
     scale(1)=sum(alpha(1,:));
@@ -48,7 +59,7 @@ for in=1:N
     
     delta(1,:) = alpha(1,:);    % Eq. 32(a) Rabiner (1989)
     % Eq. 32(b) Psi already zero
-    for i=2:T(in)
+    for i=2:Ttr
         alpha(i,:)=(alpha(i-1,:)*P).*B(i,:);
         scale(i)=sum(alpha(i,:));
         alpha(i,:)=alpha(i,:)/(scale(i)+tiny);
@@ -74,25 +85,25 @@ for in=1:N
     end;
     
     % Get beta values for single state decoding
-    beta(T(in),:)=ones(1,K)/scale(T(in));
-    for i=T(in)-1:-1:1
+    beta(Ttr,:)=ones(1,K)/scale(Ttr);
+    for i=Ttr-1:-1:1
         beta(i,:)=(beta(i+1,:).*B(i+1,:))*(P')/scale(i);
     end;
     
-    xi=zeros(T(in)-1,K*K);
-    for i=1:T(in)-1
+    xi=zeros(Ttr-1,K*K);
+    for i=1:Ttr-1
         t=P.*( alpha(i,:)' * (beta(i+1,:).*B(i+1,:)));
         xi(i,:)=t(:)'/sum(t(:));
     end;
     
     % Backtracking for Viterbi decoding
-    id = find(delta(T(in),:)==max(delta(T(in),:)));% Eq 34b Rabiner;
-    q_star(T(in)) = id(1);
-    for i=T(in)-1:-1:1,
+    id = find(delta(Ttr,:)==max(delta(Ttr,:)));% Eq 34b Rabiner;
+    q_star(Ttr) = id(1);
+    for i=Ttr-1:-1:1,
         q_star(i) = psi(i+1,q_star(i+1));
     end
     
-    vpath(in).q_star = q_star;
+    vpath(tr).q_star = q_star;
     
 end
 
