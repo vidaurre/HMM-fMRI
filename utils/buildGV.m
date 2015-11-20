@@ -12,14 +12,12 @@ obtain_V = nargout>1;
 
 G = zeros(Tfmri(tr),p); 
 if obtain_V, 
-    V = zeros(p,p); 
-    if ~hmm.train.factorX % cov matrix for this channel and trial (Ttr x Ttr)
-        ind_n = n : ndim : ( (Ttr-1)*ndim+n );
-        Sx = X.S{tr}(ind_n,ind_n); % T x T 
-    end
+    V = zeros(p,p);
+    ind_n = n : ndim : ( (Ttr-1)*ndim+n );
+    Sx = X.S{tr}(ind_n,ind_n); % T x T cov matrix for this channel and epoch
 end
 
-for t=t0fMRI+1:Tfmri(tr)
+for t=t0fMRI+1:t0fMRI+Tfmri(tr)
     ind_t = hmm.train.I2(t,:); % the x_t that predict y_t 
     in_boundary = (ind_t>t0 & ind_t<=t1); % exclude the boundaries
     ind_L = find(in_boundary); % the corresponding lags
@@ -27,15 +25,8 @@ for t=t0fMRI+1:Tfmri(tr)
     mx = X.mu(ind_t,n)'; % 1xL
     G(t-t0fMRI,:) = sum(repmat(mx,p,1) .* hmm.train.H(:,ind_L),2)';
     if obtain_V
-        if hmm.train.factorX
-            if strcmp(hmm.train.covtype,'diag'), sx = X.S(ind_t,n)'; % 1xL
-            else sx = X.S(ind_t,ind_diag(n))'; % 1xL
-            end
-            V = V + (hmm.train.H(:,ind_L) .* repmat(sx,p,1)) *  hmm.train.H(:,ind_L)';
-        else
-            ind_t_t0 = ind_t - sum(T(1:tr-1)) - cutoff(1); % ind_t refers to the absolute position
-            V = V + hmm.train.H(:,ind_L) * Sx(ind_t_t0,ind_t_t0) *  hmm.train.H(:,ind_L)'; 
-        end
+        ind_t_t0 = ind_t - sum(T(1:tr-1)) - cutoff(1); % ind_t refers to the absolute position in Sx
+        V = V + hmm.train.H(:,ind_L) * Sx(ind_t_t0,ind_t_t0) *  hmm.train.H(:,ind_L)';
     end
 end
         

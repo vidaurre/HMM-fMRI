@@ -19,3 +19,6 @@ D = gammaln(sum(alpha_q)) - gammaln(sum(alpha_p)) - sum(gammaln(alpha_q)) + sum(
     (alpha_q - alpha_p) * (psi(alpha_q) - psi(sum(alpha_q)))';
 
 
+
+
+

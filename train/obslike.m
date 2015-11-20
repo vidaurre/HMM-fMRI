@@ -22,14 +22,14 @@ for k=1:K
     
     switch hmm.train.covtype,
         case 'diag'
-            ldetWishB=0.5*sum(log(hs.Omega.rate));
-            PsiWish_alphasum=0.5*ndim*psi(hs.Omega.shape); %/2);  % why /2 ?? if not, HMM-MAR is wrong
+            ldetWishB = 0.5*sum(log(hs.Omega.rate));
+            PsiWish_alphasum = 0.5*ndim*psi(hs.Omega.shape);  
             C = hs.Omega.shape ./ hs.Omega.rate;
         case 'full'
-            ldetWishB=0.5*logdet(hs.Omega.rate);
-            PsiWish_alphasum=0;
+            ldetWishB = 0.5*hs.Omega.logdetrate;
+            PsiWish_alphasum = 0;
             for n=1:ndim,
-                PsiWish_alphasum=PsiWish_alphasum+0.5*psi(hs.Omega.shape/2+0.5-n/2);
+                PsiWish_alphasum = PsiWish_alphasum+0.5*psi(hs.Omega.shape/2+0.5-n/2);
             end;
             C = hs.Omega.shape * hs.Omega.irate;
     end;
@@ -45,39 +45,20 @@ for k=1:K
     for n=1:ndim
         dist=dist-0.5*d(:,n).*Cd(n,:)';
     end
-        
-    if hmm.train.factorX
+       
+    % uncertainty in the mean
+    NormWishtrace = zeros(T,1);
+    NormWishtrace(:) = 0.5 * sum(sum( C .* hs.Mean.S ));
+    % uncertainty in X
+    for t=1:T
+        ind = (1:ndim) + ndim*(t-1);
         if strcmp(hmm.train.covtype,'diag')
-            NormWishtrace = 0.5 * sum(repmat(C,T,1) .* (repmat(hs.Mean.S,T,1) + X.S) , 2);
+            NormWishtrace(t) = NormWishtrace(t) + 0.5 * sum( C' .*  diag(X.S{1}(ind,ind)) );
         else
-            NormWishtrace = zeros(T,1);
-            for n1=1:ndim
-                for n2=1:ndim % do this more efficient...
-                    NormWishtrace = NormWishtrace + 0.5 * C(n1,n2) * ( hs.Mean.S(n1,n2) + X.S(:,n1,n2));
-                end
-            end
-        end
-    else
-        if strcmp(hmm.train.covtype,'diag')
-            NormWishtrace = 0.5 * sum(repmat(C,T,1) .* (repmat(hs.Mean.S,T,1) ) , 2);
-        else
-            NormWishtrace = zeros(T,1);
-            for n1=1:ndim
-                for n2=1:ndim
-                    NormWishtrace = NormWishtrace + 0.5 * C(n1,n2) * hs.Mean.S(n1,n2) ;
-                end
-            end
-        end
-        for t=1:T
-            ind = (1:ndim) + ndim*(t-1);
-            if strcmp(hmm.train.covtype,'diag')
-                NormWishtrace(t) = NormWishtrace(t) + 0.5 * sum( C' .*  diag(X.S{1}(ind,ind)) );
-            else
-                NormWishtrace(t) = NormWishtrace(t) + 0.5 * sum(sum( C' .* X.S{1}(ind,ind) ));
-            end
+            NormWishtrace(t) = NormWishtrace(t) + 0.5 * sum(sum( C' .* X.S{1}(ind,ind) ));
         end
     end
-          
+    
     LL(:,k)= -ltpi - ldetWishB + PsiWish_alphasum + dist - NormWishtrace; 
 end;
 LL=exp(LL);

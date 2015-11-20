@@ -17,4 +17,5 @@ for t = r
         y(these_y-t0fMRI,n) = y(these_y-t0fMRI,n) - (X.mu(t,n) * meanH(these_l))';
     end
 end
+
 end

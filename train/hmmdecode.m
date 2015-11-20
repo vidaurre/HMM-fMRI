@@ -35,16 +35,8 @@ for tr=1:N
 
     t0 = sum(T(1:tr-1));  
     Xin.mu = X.mu(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:);
-    if hmm.train.factorX
-        if strcmp(hmm.train.covtype,'diag')
-            Xin.S = X.S(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:);
-        else
-            Xin.S = X.S(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:,:);
-        end
-    else
-        Xin.S = cell(1);
-        Xin.S{1} = X.S{tr};
-    end
+    Xin.S = cell(1);
+    Xin.S{1} = X.S{tr};
 
     B = obslike(hmm,Xin);
     B(B<realmin) = realmin;

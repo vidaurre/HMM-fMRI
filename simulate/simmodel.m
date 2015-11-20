@@ -39,7 +39,7 @@ for tr=1:N
             hmm.HRF(tr).alpha.shape(n) = 0.5 * p;
             hmm.HRF(tr).alpha.rate(n) = hmm.HRF(tr).alpha.shape(n); %hmm.HRF(tr).alpha.shape(n) * 0.25 * rand;
             hmm.HRF(tr).sigma.shape(n) = 0.5 * Tsignal(tr);
-            hmm.HRF(tr).sigma.rate(n) = hmm.HRF(tr).sigma.shape(n) * noiseFactor(1) * rand;   
+            hmm.HRF(tr).sigma.rate(n) = hmm.HRF(tr).sigma.shape(n) * (0.1 + noiseFactor(1) * rand);   
             hmm.HRF(tr).B.mu(:,n) =  ...
                 mvnrnd(train.meanB',(hmm.HRF(tr).alpha.rate(n)/hmm.HRF(tr).alpha.shape(n)) * train.covB)';            
             %hmm.HRF(tr).B.S(:,:,n) = (hmm.HRF(tr).alpha.rate(n)/hmm.HRF(tr).alpha.shape(n)) * eye(p);

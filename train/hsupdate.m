@@ -18,7 +18,7 @@ function [hmm]=hsupdate(hmm,T,Xi,Gamma)
 N = length(T);
 K=hmm.K;
 % transition matrix
-sxi=squeeze(sum(Xi,1));   % counts over time
+sxi = permute(sum(Xi,1),[2 3 1]);   % counts over time
 cutoff = hmm.train.cutoff; scutoff = sum(abs(cutoff));
 
 hmm.Dir2d_alpha=sxi+hmm.prior.Dir2d_alpha;
@@ -32,8 +32,8 @@ end;
 
 % initial state
 hmm.Dir_alpha=hmm.prior.Dir_alpha;
-for in=1:N
-    t = sum(T(1:in-1)) - (in-1)*scutoff + 1;
+for tr=1:N
+    t = sum(T(1:tr-1)) - (tr-1)*scutoff + 1;
     hmm.Dir_alpha=hmm.Dir_alpha+Gamma(t,:);
 end
 PsiSum=psi(sum(hmm.Dir_alpha,2));

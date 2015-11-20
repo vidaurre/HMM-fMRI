@@ -1,7 +1,7 @@
 function [Q,R] = buildQR(hmm,tr)
-% Auxiliar variables Q, R for a non-factorized X
+% Auxiliar variables Q, R 
 ndim = size(hmm.HRF(tr).B.mu,2);
-[p,L] = size(hmm.train.H);
+L = size(hmm.train.H,2);
 Q = zeros(L,L,ndim); R = zeros(ndim,L); 
 %BB = zeros(p,p,ndim);
 %for n=1:ndim,

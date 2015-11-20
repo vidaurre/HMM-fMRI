@@ -194,9 +194,9 @@ case 'neuroscale'
     end
   end
   options(8) = errold;
-  if (options(1) >= 0)
-    disp('Warning: Maximum number of iterations has been exceeded');
-  end
+  %if (options(1) >= 0)
+  %  disp('Warning: Maximum number of iterations has been exceeded');
+  %end
 otherwise
    error(['Unknown output function ', net.outfn]);
 

@@ -1,25 +1,11 @@
-function [D] = wishart_kl (B_q,B_p,alpha_q,alpha_p)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%   [D] = wishart_kl (B_q,B_p,alpha_q,alpha_p)
-%
-%   computes the divergence 
+function [D] = wishart_kl (B_q,B_p,alpha_q,alpha_p,logdetB_q,logdetB_p)
+% computes the divergence between two k-dimensional Wishart prop. densities
 %                /
 %      D(q||p) = | q(x)*log(q(x)/p(x)) dx
 %               /
-%   between two k-dimensional Wishart propability density for C  given
-%   scale matrix B and shape parameter alpha
-%
-%            alpha
-%         |B|              alpha-(k+1)/2
-%   p(x)= ------------- |C|              exp (-tr(BC))
-%         Gamma (alpha)
-%              k
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if nargin<4,
-  error('Incorrect number of input arguements');
+  error('Incorrect number of input arguments');
 end;
 
 if size(B_q)~=size(B_p),
@@ -28,8 +14,12 @@ end;
 
 K=size(B_p,1);
 
-Lq = -logdet(B_q,'chol') + K * log(2);
-Lp = -logdet(B_p,'chol') + K * log(2);
+if nargin<5, logdetB_q = logdet(B_q,'chol'); end
+if nargin<6, logdetB_p = logdet(B_p,'chol'); end
+
+
+Lq = -logdetB_q + K * log(2);
+Lp = -logdetB_p + K * log(2);
 
 lZq = log(2) * (alpha_q*K/2)  - Lq * (-alpha_q/2) + K*(K-1)/4 * log(pi); 
 lZp = log(2) * (alpha_p*K/2)  - Lp * (-alpha_p/2) + K*(K-1)/4 * log(pi); 

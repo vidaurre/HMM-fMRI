@@ -38,7 +38,7 @@ if isempty(options.hmm) % Initialisation of the hmm
     hmm_wr.train = options; 
     %if options.whitening, hmm_wr.train.A = A; hmm_wr.train.iA = iA;  end
     hmm_wr=hmmhsinit(hmm_wr);
-    [hmm_wr,X_wr,Gamma_wr]=hmminit(data,T,hmm_wr);
+    [hmm_wr,X_wr,Gamma_wr,fehist_wr]=hmminit(data,T,hmm_wr);
 else % using a warm restart from a previous run
     hmm_wr = options.hmm;
     options = rmfield(options,'hmm');
@@ -47,7 +47,13 @@ else % using a warm restart from a previous run
     X_wr = options.X;
 end
 
-fehist = Inf;
+
+if options.repetitions==0
+    fehist = fehist_wr; hmm = hmm_wr; 
+    Gamma = Gamma_wr; X = X_wr; Xi = [];
+else
+    fehist = Inf;
+end
 for it=1:options.repetitions
     hmm0 = hmm_wr; Gamma0 = Gamma_wr; X0 = X_wr;
     [hmm0,Gamma0,Xi0,X0,fehist0] = hmmtrain(data,T,hmm0,X0,Gamma0);
@@ -60,7 +66,7 @@ for it=1:options.repetitions
     end
 end
 
-if options.updateGamma
+if options.updateGamma && options.repetitions>0
     vp = hmmdecode(T,hmm,X);
     vpath=[];
     for in=1:length(vp)

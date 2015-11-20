@@ -12,5 +12,5 @@ function s = maxitmess()
 
 %	Copyright (c) Ian T Nabney (1996-2001)
 
-s = 'Maximum number of iterations has been exceeded';
-
+%s = 'Maximum number of iterations has been exceeded';
+s = '';

@@ -63,9 +63,9 @@ end
 
 check_covars = 0;
 if options(5) >= 1
-  if display >= 0
-    disp('check_covars is on');
-  end
+  %if display >= 0
+  %  disp('check_covars is on');
+  %end
   check_covars = 1;	% Ensure that covariances don't collapse
   MIN_COVAR = eps;	% Minimum singular value of covariance matrix
   init_covars = mix.covars;

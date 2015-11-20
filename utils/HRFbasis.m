@@ -14,7 +14,7 @@ if nargin<3, cutoffThres = 0.90; end
 if nargin<1, p = 3; end
 M0 = dlmread('data/FLOBS_hrfsamps.txt'); % time points (L) by n samples
 Hz0 = size(M0,1) / 28; % 28s is the time length - see FLOBS GUI
-M = zeros(size(M0,1) * (round(Hz*1e2)/round(Hz0*1e2)),size(M0,2));
+M = zeros(round(size(M0,1) * (round(Hz*1e2)/round(Hz0*1e2))),size(M0,2));
 if nargin<2
     Hz = Hz0; % Hz0 is the freq of the built on HRF basis
 else
@@ -24,14 +24,14 @@ else
         end
     end
 end
-L = size(M,1);
+L = size(M,1); % M (L x 1000) = H (L x p) * B (p x 1000)
 mu_M = mean(M); M = M - repmat(mu_M,L,1); %mu_M = mean(mu_M); % demeaning (needed for PCA)
 [~,H] = pca(M,'NumComponents',p,'Centered',false);
 H = [ ones(L,1) (H ./ repmat(std(H),L,1))]; % the intercept is necessary
 M = M + repmat(mu_M,L,1); % put it back so that we don't have to carry it all the way through
 meanH = mean(M,2)'; % 1 x L, 
-R = pinv(H) * M; % p x L
-meanB = mean(R,2); % you rescaled H, so you can't use the first argument of PCA, 
+R = pinv(H) * M; % M (L x 1000) = H (L + p+1) x R (p+1 x 1000)
+meanB = mean(R,2); % (1 x p+1) - you rescaled H, so you can't use the first argument of PCA, 
 covB = cov(R');
 H = H'; % p x L
 cutoff = zeros(1,2);

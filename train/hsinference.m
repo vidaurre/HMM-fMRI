@@ -28,16 +28,8 @@ Xi=[];
 for tr=1:N
     t0 = sum(T(1:tr-1));  
     Xin.mu = X.mu(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:);
-    if hmm.train.factorX
-        if strcmp(hmm.train.covtype,'diag')
-            Xin.S = X.S(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:);
-        else
-            Xin.S = X.S(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:,:);
-        end
-    else
-        Xin.S = cell(1);
-        Xin.S{1} = X.S{tr};
-    end
+    Xin.S = cell(1);
+    Xin.S{1} = X.S{tr};
     C = data.C(t0+1+cutoff(1):t0+T(tr)+cutoff(2),:);
     % we jump over the fixed parts of the chain
     t = 1; Ttr = T(tr)-scutoff;
@@ -58,16 +50,10 @@ for tr=1:N
         end
         if isnan(C(t,1))
             x.mu = Xin.mu(slice,:); 
-            if hmm.train.factorX
-                if strcmp(hmm.train.covtype,'diag'), x.S = Xin.S(slice,:);
-                else x.S = Xin.S(slice,:,:);
-                end
-            else
-                x.S = cell{1};
-                ind = ((slice(1)-1)*ndim + 1) : (slice(end)*ndim) ;
-                x.S{1} = Xin.S{1}(ind,ind);
-            end
-            [gammat,xit,Bt]=nodecluster(x,hmm); 
+            x.S = cell(1);
+            ind = ((slice(1)-1)*ndim + 1) : (slice(end)*ndim) ;
+            x.S{1} = Xin.S{1}(ind,ind);
+            [gammat,xit,Bt]=nodecluster(x,hmm);
         else
             gammat = zeros(length(slice),K);
             if t==1, gammat(1,:) = C(slice(1),:); end
@@ -128,7 +114,6 @@ for i=T-1:-1:1
     beta(i,:)=(beta(i+1,:).*B(i+1,:))*(P')/scale(i);
 end;
 Gamma=(alpha.*beta);
-Gamma=Gamma(1:T,:);
 Gamma=rdiv(Gamma,rsum(Gamma));
 
 Xi=zeros(T-1,K*K);
