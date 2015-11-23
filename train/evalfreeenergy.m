@@ -97,7 +97,13 @@ end;
 % Entropy of latent signal
 EntrX = 0;
 for tr=1:length(T)
-    EntrX = EntrX + 0.5 * logdet(X.S{tr},'chol') + 0.5 * size(X.S{tr},1) * (1 + log(2*pi));
+    try
+        EntrX = EntrX + 0.5 * logdet(X.S{tr},'chol') + 0.5 * size(X.S{tr},1) * (1 + log(2*pi));
+    catch exception
+        warning(strcat('Covariance of the latent signal for trial ',num2str(tr),...
+            ' is close to not be positive definite, so I cannot use the choleski factorization'))
+        EntrX = EntrX + 0.5 * logdet(X.S{tr}) + 0.5 * size(X.S{tr},1) * (1 + log(2*pi));
+    end
 end
 
 ltpi = ndim/2*log(2*pi); % - ndim/2;
